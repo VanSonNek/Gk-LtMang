@@ -24,7 +24,6 @@ public class ChatApp {
             chatWindow.addSendAction(ev -> {
                 String msg = chatWindow.getInputText();
                 if (!msg.isEmpty()) {
-                    chatWindow.appendMessage("Me", msg);
                     chatHandler.sendMessage(msg);
                     chatWindow.clearInput();
                 }

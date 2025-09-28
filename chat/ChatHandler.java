@@ -26,6 +26,9 @@ public class ChatHandler {
     // Gửi tin nhắn text
     public void sendMessage(String message) {
         try {
+            // Hiển thị trước khi gửi
+            chatWindow.appendMessage("Me", message);
+
             dataOut.writeUTF("TEXT:" + message);
             dataOut.flush();
         } catch (IOException e) {
@@ -99,7 +102,8 @@ public class ChatHandler {
                 byte[] buffer = new byte[4096];
                 long remaining = fileLength;
                 int read;
-                while (remaining > 0 && (read = dataIn.read(buffer, 0, (int) Math.min(buffer.length, remaining))) != -1) {
+                while (remaining > 0
+                        && (read = dataIn.read(buffer, 0, (int) Math.min(buffer.length, remaining))) != -1) {
                     fos.write(buffer, 0, read);
                     remaining -= read;
                 }
@@ -111,7 +115,8 @@ public class ChatHandler {
                 long remaining = fileLength;
                 while (remaining > 0) {
                     int r = dataIn.read(buffer, 0, (int) Math.min(buffer.length, remaining));
-                    if (r == -1) break;
+                    if (r == -1)
+                        break;
                     remaining -= r;
                 }
                 chatWindow.appendMessage("System", "Đã từ chối nhận file: " + fileName);
