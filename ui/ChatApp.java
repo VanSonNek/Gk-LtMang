@@ -6,12 +6,14 @@ import chat.ChatHandler;
 import javax.swing.*;
 
 public class ChatApp {
+    private static ChatHandler activeHandler; // handler chính để gửi/nhận
+
     public static void main(String[] args) {
         try {
             SocketConnector connector = new SocketConnector();
             ChatWindow chatWindow = new ChatWindow();
 
-            // Luôn chạy server ở cổng 12345
+            // Luôn khởi chạy server
             connector.startServer(12345, chatWindow);
 
             // Hỏi có muốn kết nối tới peer khác không
@@ -20,25 +22,40 @@ public class ChatApp {
                 connector.startClient(host.trim(), 12345, chatWindow);
             }
 
-            // Tạo ChatHandler cho cả incoming và outgoing
+            // Luồng theo dõi incoming socket
             new Thread(() -> {
                 while (true) {
                     try {
-                        if (connector.getIncomingSocket() != null) {
-                            new ChatHandler(connector.getIncomingSocket(), chatWindow);
-                            break;
+                        if (connector.getIncomingSocket() != null && activeHandler == null) {
+                            activeHandler = new ChatHandler(connector.getIncomingSocket(), chatWindow);
+                            attachActions(chatWindow, activeHandler);
                         }
                         Thread.sleep(500);
                     } catch (Exception ignored) {}
                 }
             }).start();
 
+            // Nếu đã có outgoing thì dùng luôn
             if (connector.getOutgoingSocket() != null) {
-                new ChatHandler(connector.getOutgoingSocket(), chatWindow);
+                activeHandler = new ChatHandler(connector.getOutgoingSocket(), chatWindow);
+                attachActions(chatWindow, activeHandler);
             }
 
         } catch (Exception e) {
             e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Lỗi: " + e.getMessage());
         }
+    }
+
+    // Gắn hành động gửi tin nhắn / gửi file
+    private static void attachActions(ChatWindow chatWindow, ChatHandler handler) {
+        chatWindow.addSendAction(ev -> {
+            String msg = chatWindow.getInputText();
+            if (!msg.isEmpty()) {
+                handler.sendMessage(msg);
+                chatWindow.clearInput();
+            }
+        });
+        chatWindow.addSendFileAction(ev -> handler.sendFile());
     }
 }
